@@ -1,0 +1,22 @@
+{
+  "name": "suppliers",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "fastify": "^4.24.0",
+    "@fastify/websocket": "^8.3.0",
+    "openai": "^4.20.0",
+    "twilio": "^4.19.0",
+    "dotenv": "^16.3.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.0"
+  }
+}

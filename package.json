@@ -1,0 +1,19 @@
+{
+  "name": "procurement-negotiator-inft",
+  "private": true,
+  "workspaces": [
+    "contracts",
+    "agent",
+    "suppliers",
+    "ui"
+  ],
+  "scripts": {
+    "compile": "npm run compile -w contracts",
+    "test": "npm run test -w contracts",
+    "deploy:local": "npm run deploy:local -w contracts",
+    "deploy:testnet": "npm run deploy:testnet -w contracts",
+    "suppliers": "npm start -w suppliers",
+    "agent": "npm start -w agent",
+    "ui": "npm run dev -w ui"
+  }
+}

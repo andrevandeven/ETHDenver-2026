@@ -1,0 +1,28 @@
+node_modules/
+.env
+.env.local
+
+# Hardhat
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+
+# Next.js
+ui/.next/
+ui/out/
+
+# Build
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+coverage/

@@ -100,20 +100,40 @@ export default function AgentProfilePage({
 
   const isOwner = owner && address && owner.toLowerCase() === address.toLowerCase();
 
-  // Always fetch brain — everyone sees supplier names, only owner sees full details
+  // Decode brain directly from the on-chain brainBundleURI — works from any machine
+  // without needing the orchestrator API. Falls back to orchestrator for 0g:// URIs.
   const [brain, setBrain] = useState<BrainData | null>(null);
   const [brainLoading, setBrainLoading] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
+    if (!profile) return;
+    const uri: string = profile.brainBundleURI ?? "";
     setBrainLoading(true);
-    fetch(`${AGENT_URL}/api/brain/${tokenId}`, { signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setBrain(data))
-      .catch((err) => { if (err.name !== "AbortError") setBrain(null); })
-      .finally(() => setBrainLoading(false));
-    return () => controller.abort();
-  }, [tokenId]);
+
+    if (uri.startsWith("json://")) {
+      // Brain embedded inline in the on-chain URI — decode directly in the browser
+      try {
+        const decoded = atob(uri.slice(7));
+        const data = JSON.parse(decoded) as BrainData;
+        setBrain(data);
+      } catch {
+        setBrain(null);
+      }
+      setBrainLoading(false);
+    } else if (uri.startsWith("0g://") || !uri) {
+      // Fall back to orchestrator API for 0g:// URIs or when URI not yet set
+      const controller = new AbortController();
+      fetch(`${AGENT_URL}/api/brain/${tokenId}`, { signal: controller.signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => setBrain(data))
+        .catch((err) => { if (err.name !== "AbortError") setBrain(null); })
+        .finally(() => setBrainLoading(false));
+      return () => controller.abort();
+    } else {
+      setBrain(null);
+      setBrainLoading(false);
+    }
+  }, [tokenId, profile]);
 
   if (!profile) {
     return (

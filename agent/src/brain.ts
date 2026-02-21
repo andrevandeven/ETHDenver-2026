@@ -103,7 +103,7 @@ export async function loadBrain(agentId: bigint): Promise<BrainData> {
 
   const { nft, signer } = getContracts();
 
-  // 1. Try on-chain URI → 0G Storage
+  // 1. Try on-chain URI (0g:// or json://)
   try {
     const profile = await nft.getProfile(agentId);
     const uri: string = profile.brainBundleURI;
@@ -118,9 +118,19 @@ export async function loadBrain(agentId: bigint): Promise<BrainData> {
         console.log(`[brain] Loaded brain for agent ${key} from 0G Storage: ${brain.totalNegotiations} negotiations`);
         return brain;
       }
+    } else if (uri && uri.startsWith("json://")) {
+      const decoded = Buffer.from(uri.slice(7), "base64").toString("utf8");
+      const data = JSON.parse(decoded);
+      if (data && typeof data === "object" && (data as BrainData).version) {
+        const brain = data as BrainData;
+        brains.set(key, brain);
+        saveLocal(key, brain);
+        console.log(`[brain] Loaded brain for agent ${key} from on-chain json:// URI: ${brain.totalNegotiations} negotiations`);
+        return brain;
+      }
     }
   } catch (err) {
-    console.warn(`[brain] Could not load from 0G Storage for agent ${key}:`, err);
+    console.warn(`[brain] Could not load from on-chain URI for agent ${key}:`, err);
   }
 
   // 2. Fall back to local file

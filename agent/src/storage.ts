@@ -35,8 +35,9 @@ export async function uploadJSON(
   const localHash = ethers.keccak256(ethers.toUtf8Bytes(json));
 
   if (!MemData || !Indexer || !signer) {
-    console.log("[storage] Using local hash fallback for upload");
-    return { rootHash: localHash, uri: `local://${localHash}` };
+    console.log("[storage] Using inline json:// fallback for upload");
+    const encoded = Buffer.from(json, "utf8").toString("base64");
+    return { rootHash: localHash, uri: `json://${encoded}` };
   }
 
   try {
@@ -54,8 +55,9 @@ export async function uploadJSON(
     console.log(`[storage] Uploaded to 0G Storage: rootHash=${rootHash} txHash=${txHash}`);
     return { rootHash, uri, txHash };
   } catch (err) {
-    console.error("[storage] 0G upload failed, using local fallback:", err);
-    return { rootHash: localHash, uri: `local://${localHash}` };
+    console.error("[storage] 0G upload failed, using inline json:// fallback:", err);
+    const encoded = Buffer.from(json, "utf8").toString("base64");
+    return { rootHash: localHash, uri: `json://${encoded}` };
   }
 }
 

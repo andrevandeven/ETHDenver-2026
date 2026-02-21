@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { parseEther, keccak256, toBytes } from "viem";
 import { ADDRESSES, NEGOTIATOR_INFT_ABI, USAGE_CREDITS_ABI } from "@/lib/contracts";
@@ -65,23 +65,23 @@ export default function MintPage() {
     });
   }
 
-  function handleSetPrice() {
-    const tokenId = getTokenIdFromReceipt();
-    if (tokenId === null) return;
+  // Auto-trigger setPrice as soon as mint confirms — no manual step needed
+  useEffect(() => {
+    if (mintConfirmed && step === "mint") {
+      setStep("price");
+      const tokenId = getTokenIdFromReceipt();
+      if (tokenId === null) return;
+      setPrice({
+        address: ADDRESSES.usageCredits,
+        abi: USAGE_CREDITS_ABI,
+        functionName: "setPrice",
+        args: [tokenId, parseEther(form.pricePerCredit)],
+        chainId: zgGalileo.id,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mintConfirmed]);
 
-    setPrice({
-      address: ADDRESSES.usageCredits,
-      abi: USAGE_CREDITS_ABI,
-      functionName: "setPrice",
-      args: [tokenId, parseEther(form.pricePerCredit)],
-      chainId: zgGalileo.id,
-    });
-  }
-
-  // Advance to price step once mint confirms
-  if (mintConfirmed && step === "mint") {
-    setStep("price");
-  }
   if (priceConfirmed && step === "price") {
     setStep("done");
   }
@@ -186,17 +186,6 @@ export default function MintPage() {
               </button>
             )}
 
-            {/* Step 2: Set credit price */}
-            {step === "price" && !priceHash && (
-              <button
-                type="button"
-                onClick={handleSetPrice}
-                disabled={isSettingPrice}
-                className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 font-semibold text-white transition-colors"
-              >
-                {isSettingPrice ? "Check your wallet…" : `Set Credit Price: ${form.pricePerCredit} A0GI`}
-              </button>
-            )}
           </form>
         )}
       </main>

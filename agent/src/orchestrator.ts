@@ -79,9 +79,10 @@ async function handleRFQ(
 
   // Load the agent's brain and look up this supplier
   const brain = await loadBrain(agentId);
-  const brainContext = buildSupplierContext(brain, rfqDetails.supplierName);
+  const { context: brainContext, lowestCompetitorPrice } = buildSupplierContext(brain, rfqDetails.supplierName);
   if (brainContext) {
     console.log(`[orchestrator] Found past intel on "${rfqDetails.supplierName}" — injecting into prompt`);
+    if (lowestCompetitorPrice) console.log(`[orchestrator] Lowest competitor price: $${lowestCompetitorPrice}`);
   } else {
     console.log(`[orchestrator] No prior history with "${rfqDetails.supplierName}"`);
   }
@@ -95,6 +96,7 @@ async function handleRFQ(
     region: rfqDetails.region,
     budget: rfqDetails.budget,
     brainContext,
+    lowestCompetitorPrice: lowestCompetitorPrice ?? undefined,
   };
 
   let callSid: string;
@@ -111,6 +113,12 @@ async function handleRFQ(
   const allEntries = getAgentTranscript(callSid);
   const transcriptText = formatTranscript(allEntries);
   console.log(`[orchestrator] Transcript (${allEntries.length} entries):\n${transcriptText}`);
+
+  if (allEntries.length === 0) {
+    console.warn(`[orchestrator] Call completed with no transcript — WebSocket never connected. Skipping quote commit.`);
+    clearSession(callSid);
+    return;
+  }
 
   // Extract quote
   const extracted = await extractQuote(transcriptText, rfqDetails.supplierName);
@@ -173,6 +181,10 @@ async function handleRFQ(
   console.log(`\n[orchestrator] === RFQ ${rfqId} processing complete ===`);
 }
 
+// Deduplicate: track RFQ IDs currently being processed so duplicate events
+// (ethers polling re-delivery or zombie agent processes) don't cause double commits.
+const processingRFQs = new Set<string>();
+
 /**
  * Start the orchestrator — handles all RFQs.
  * Access control is enforced at createRFQ (credit consumption).
@@ -180,9 +192,19 @@ async function handleRFQ(
  */
 export function startOrchestrator(): void {
   listenForRFQCreated(async (rfqId, buyer, agentId, _rfqDataHash) => {
+    const key = String(rfqId);
+    if (processingRFQs.has(key)) {
+      console.warn(`[orchestrator] RFQ ${rfqId} already in-flight — ignoring duplicate event`);
+      return;
+    }
+    processingRFQs.add(key);
     console.log(`[orchestrator] Processing RFQ ${rfqId} for agentId=${agentId} buyer=${buyer}`);
-    handleRFQ(rfqId, buyer, agentId).catch((err) => {
-      console.error(`[orchestrator] Error handling RFQ ${rfqId}:`, err);
-    });
+    handleRFQ(rfqId, buyer, agentId)
+      .catch((err) => {
+        console.error(`[orchestrator] Error handling RFQ ${rfqId}:`, err);
+      })
+      .finally(() => {
+        processingRFQs.delete(key);
+      });
   });
 }

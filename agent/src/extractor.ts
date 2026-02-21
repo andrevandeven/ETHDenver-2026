@@ -13,13 +13,15 @@ export type ExtractedQuote = {
 const EXTRACTION_PROMPT = `Extract the final agreed procurement quote from this negotiation transcript.
 Return ONLY a JSON object with these exact fields (no markdown, no explanation):
 {
-  "supplierLabel": "string — supplier company name",
-  "unitPriceUsd": number — final agreed price per unit in USD,
-  "moq": number — minimum order quantity,
-  "leadTimeDays": number — delivery lead time in days
+  "unitPriceUsd": number — the LAST agreed price per unit in USD (a plain number like 4.80),
+  "moq": number — minimum order quantity (a plain integer),
+  "leadTimeDays": number — delivery lead time in days (a plain integer)
 }
 
-If any field is unclear, make a best-effort estimate from context.`;
+Rules:
+- unitPriceUsd must be a number that actually appears in the transcript
+- If no price was agreed, use the lowest price mentioned
+- Do NOT invent numbers that are not in the transcript`;
 
 /**
  * Extract a structured quote from a negotiation transcript using 0G Compute LLM.
@@ -65,11 +67,11 @@ export async function extractQuote(
   const sevenDays = Math.floor(Date.now() / 1000) + 7 * 86400;
 
   return {
-    supplierLabel: extracted.supplierLabel ?? supplierLabel,
+    supplierLabel, // always use the known supplier name, never trust LLM to extract it
     unitPriceWei,
     unitPriceUsd,
-    moq: BigInt(moq),
-    leadTimeDays: BigInt(leadTimeDays),
+    moq: BigInt(Math.round(moq)),
+    leadTimeDays: BigInt(Math.round(leadTimeDays)),
     validUntil: sevenDays,
   };
 }

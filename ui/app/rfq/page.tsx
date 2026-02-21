@@ -1,7 +1,7 @@
 "use client";
 
 import { useReadContract, useAccount } from "wagmi";
-import { ADDRESSES, RFQ_MARKET_ABI } from "@/lib/contracts";
+import { ADDRESSES, RFQ_MARKET_ABI, NEGOTIATOR_INFT_ABI } from "@/lib/contracts";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Header } from "@/components/Header";
 import Link from "next/link";
@@ -14,6 +14,14 @@ function RFQRow({ rfqId }: { rfqId: bigint }) {
     args: [rfqId],
   });
 
+  const { data: agentProfile } = useReadContract({
+    address: ADDRESSES.negotiatorINFT,
+    abi: NEGOTIATOR_INFT_ABI,
+    functionName: "getProfile",
+    args: [rfq?.agentId ?? 0n],
+    query: { enabled: rfq !== undefined },
+  });
+
   if (!rfq) return null;
 
   return (
@@ -24,7 +32,7 @@ function RFQRow({ rfqId }: { rfqId: bigint }) {
       <div>
         <p className="font-mono text-sm text-zinc-300">RFQ #{String(rfqId)}</p>
         <p className="text-xs text-zinc-500 mt-0.5">
-          Agent #{String(rfq.agentId)} — {new Date(Number(rfq.createdAt) * 1000).toLocaleDateString()}
+          {agentProfile?.name ?? `Agent #${String(rfq.agentId)}`} — {new Date(Number(rfq.createdAt) * 1000).toLocaleDateString()}
         </p>
       </div>
       <StatusBadge status={rfq.status} />

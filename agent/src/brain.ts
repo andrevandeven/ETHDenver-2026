@@ -95,6 +95,20 @@ function emptyBrain(agentId: string): BrainData {
 }
 
 /**
+ * JSON.stringify converts Infinity → null. Fix null numeric fields after loading.
+ */
+function sanitizeBrain(brain: BrainData): BrainData {
+  for (const s of Object.values(brain.suppliers)) {
+    if (s.bestPriceUsd === null || s.bestPriceUsd === undefined) s.bestPriceUsd = Infinity;
+    if (s.avgPriceUsd === null || s.avgPriceUsd === undefined) s.avgPriceUsd = 0;
+    if (!Array.isArray(s.negotiations)) s.negotiations = [];
+    if (!Array.isArray(s.tacticsLog)) s.tacticsLog = [];
+    if (!Array.isArray(s.categories)) s.categories = [];
+  }
+  return brain;
+}
+
+/**
  * Load brain from 0G Storage using the on-chain brainBundleURI.
  */
 export async function loadBrain(agentId: bigint): Promise<BrainData> {
@@ -112,7 +126,7 @@ export async function loadBrain(agentId: bigint): Promise<BrainData> {
       const rootHash = uri.slice(5);
       const data = await downloadJSON(rootHash, signer);
       if (data && typeof data === "object" && (data as BrainData).version) {
-        const brain = data as BrainData;
+        const brain = sanitizeBrain(data as BrainData);
         brains.set(key, brain);
         saveLocal(key, brain);
         console.log(`[brain] Loaded brain for agent ${key} from 0G Storage: ${brain.totalNegotiations} negotiations`);
@@ -122,7 +136,7 @@ export async function loadBrain(agentId: bigint): Promise<BrainData> {
       const decoded = Buffer.from(uri.slice(7), "base64").toString("utf8");
       const data = JSON.parse(decoded);
       if (data && typeof data === "object" && (data as BrainData).version) {
-        const brain = data as BrainData;
+        const brain = sanitizeBrain(data as BrainData);
         brains.set(key, brain);
         saveLocal(key, brain);
         console.log(`[brain] Loaded brain for agent ${key} from on-chain json:// URI: ${brain.totalNegotiations} negotiations`);
@@ -136,9 +150,10 @@ export async function loadBrain(agentId: bigint): Promise<BrainData> {
   // 2. Fall back to local file
   const local = loadLocal(key);
   if (local) {
-    brains.set(key, local);
-    console.log(`[brain] Loaded brain for agent ${key} from local file: ${local.totalNegotiations} negotiations`);
-    return local;
+    const brain = sanitizeBrain(local);
+    brains.set(key, brain);
+    console.log(`[brain] Loaded brain for agent ${key} from local file: ${brain.totalNegotiations} negotiations`);
+    return brain;
   }
 
   const brain = emptyBrain(key);
@@ -263,43 +278,35 @@ async function persistBrain(agentId: bigint, brain: BrainData): Promise<void> {
  * Build context string for the system prompt — includes intel on the current supplier
  * plus competitive pricing from other suppliers the agent has called.
  */
-export function buildSupplierContext(brain: BrainData, supplierName: string): string {
+export function buildSupplierContext(
+  brain: BrainData,
+  supplierName: string
+): { context: string; lowestCompetitorPrice: number | null } {
   const lines: string[] = [];
 
   // ── Current supplier intel ──────────────────────────────────────────────────
   const supplier = findSupplier(brain, supplierName);
   if (supplier) {
-    lines.push(`PAST INTEL ON THIS SUPPLIER (${supplier.name}):`);
-    lines.push(`  Called ${supplier.totalCalls} time(s). Best price: $${supplier.bestPriceUsd.toFixed(2)}/unit. Avg: $${supplier.avgPriceUsd.toFixed(2)}/unit.`);
-    lines.push(`  Willingness to negotiate: ${supplier.willingnessToNegotiate}.`);
-
-    if (supplier.tacticsLog.length > 0) {
-      lines.push(`  What's worked before:`);
-      supplier.tacticsLog.slice(-3).forEach((t) => lines.push(`    - ${t}`));
-    }
-
+    lines.push(`This supplier has been called ${supplier.totalCalls} time(s) before.`);
+    lines.push(`Best price achieved: $${supplier.bestPriceUsd.toFixed(2)}/unit. Willingness to negotiate: ${supplier.willingnessToNegotiate}.`);
     const lastNeg = supplier.negotiations[supplier.negotiations.length - 1];
     if (lastNeg) {
-      lines.push(`  Last deal: $${lastNeg.unitPriceUsd.toFixed(2)}/unit for ${lastNeg.item} (${lastNeg.date}).`);
+      lines.push(`Last deal: $${lastNeg.unitPriceUsd.toFixed(2)}/unit for ${lastNeg.item} (${lastNeg.date}).`);
     }
-
-    lines.push(`  Internal target: push to $${supplier.bestPriceUsd.toFixed(2)}/unit or better.`);
   }
 
   // ── Competitor intel ────────────────────────────────────────────────────────
   const competitors = Object.values(brain.suppliers).filter(
-    (s) => s.name.toLowerCase() !== supplierName.toLowerCase() && s.bestPriceUsd < Infinity
+    (s) => s.name.toLowerCase() !== supplierName.toLowerCase() && s.bestPriceUsd < Infinity && s.bestPriceUsd > 0
   );
 
+  let lowestCompetitorPrice: number | null = null;
+
   if (competitors.length > 0) {
-    // Sort by best price ascending so we lead with the most competitive
     const sorted = [...competitors].sort((a, b) => a.bestPriceUsd - b.bestPriceUsd);
-    lines.push(`\nCOMPETITOR PRICING (use as leverage — do NOT name the competitor directly):`);
-    sorted.slice(0, 3).forEach((c) => {
-      lines.push(`  - Another supplier offered $${c.bestPriceUsd.toFixed(2)}/unit (avg $${c.avgPriceUsd.toFixed(2)}).`);
-    });
-    lines.push(`  You can reference "other suppliers" or "competitor quotes" to pressure this supplier.`);
+    lowestCompetitorPrice = sorted[0].bestPriceUsd;
+    lines.push(`Another supplier has quoted as low as $${lowestCompetitorPrice.toFixed(2)}/unit.`);
   }
 
-  return lines.length > 0 ? lines.join("\n") : "";
+  return { context: lines.join("\n"), lowestCompetitorPrice };
 }

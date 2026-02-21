@@ -2,7 +2,7 @@
 
 import { use, useEffect } from "react";
 import { useReadContract } from "wagmi";
-import { ADDRESSES, RFQ_MARKET_ABI } from "@/lib/contracts";
+import { ADDRESSES, RFQ_MARKET_ABI, NEGOTIATOR_INFT_ABI } from "@/lib/contracts";
 import { Header } from "@/components/Header";
 import { StatusBadge } from "@/components/StatusBadge";
 import { QuoteCard } from "@/components/QuoteCard";
@@ -23,6 +23,14 @@ export default function RFQDetailPage({ params }: { params: Promise<{ rfqId: str
     abi: RFQ_MARKET_ABI,
     functionName: "getRFQQuoteIds",
     args: [rfqIdBn],
+  });
+
+  const { data: agentProfile } = useReadContract({
+    address: ADDRESSES.negotiatorINFT,
+    abi: NEGOTIATOR_INFT_ABI,
+    functionName: "getProfile",
+    args: [rfq?.agentId ?? 0n],
+    query: { enabled: rfq !== undefined },
   });
 
   // Auto-refresh while waiting for quotes
@@ -59,7 +67,7 @@ export default function RFQDetailPage({ params }: { params: Promise<{ rfqId: str
               <StatusBadge status={rfq.status} />
             </div>
             <p className="text-sm text-zinc-500">
-              Agent #{String(rfq.agentId)} &middot;{" "}
+              {agentProfile?.name ?? `Agent #${String(rfq.agentId)}`} &middot;{" "}
               {new Date(Number(rfq.createdAt) * 1000).toLocaleString()}
             </p>
           </div>

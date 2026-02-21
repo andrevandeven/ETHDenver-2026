@@ -19,6 +19,7 @@ export type RFQDetails = {
   region: string;
   budget?: string;
   brainContext?: string;
+  lowestCompetitorPrice?: number;
 };
 
 export type CallResult = {
@@ -27,9 +28,6 @@ export type CallResult = {
   supplierLabel: string;
 };
 
-function buildWelcomeGreeting(item: string, quantity: number): string {
-  return `Hello, I am an AI procurement agent calling to request a quote for ${quantity} units of ${item}. Could you please share your unit price, minimum order quantity, and lead time?`;
-}
 
 let twilioClient: twilio.Twilio | null = null;
 
@@ -68,21 +66,22 @@ export async function initiateCall(
   });
 
   console.log(`[caller] Call initiated to ${supplierNumber} callSid=${call.sid}`);
+  console.log(`[caller] TwiML URL: ${twimlUrl}`);
+  console.log(`[caller] RFQ details:`, JSON.stringify({ ...rfqDetails, brainContext: rfqDetails.brainContext ? `[${rfqDetails.brainContext.length} chars]` : "none" }, null, 2));
 
-  const welcomeGreeting = buildWelcomeGreeting(rfqDetails.item, rfqDetails.quantity);
+  const systemPrompt = buildBuyerSystemPrompt({
+    item: rfqDetails.item,
+    quantity: rfqDetails.quantity,
+    region: rfqDetails.region,
+    budget: rfqDetails.budget,
+    brainContext: rfqDetails.brainContext,
+    lowestCompetitorPrice: rfqDetails.lowestCompetitorPrice,
+  });
+  console.log(`[caller] System prompt:\n${"─".repeat(60)}\n${systemPrompt}\n${"─".repeat(60)}`);
 
-  // Pre-register session — include welcomeGreeting as first assistant message
-  // so the LLM knows it already said the opening line and doesn't repeat it.
   sessions.set(call.sid, {
     history: [
-      { role: "system", content: buildBuyerSystemPrompt({
-        item: rfqDetails.item,
-        quantity: rfqDetails.quantity,
-        region: rfqDetails.region,
-        budget: rfqDetails.budget,
-        brainContext: rfqDetails.brainContext,
-      }) },
-      { role: "assistant", content: welcomeGreeting },
+      { role: "system", content: systemPrompt },
     ],
     transcript: [],
     rfqDetails,
@@ -162,11 +161,8 @@ export async function startAgentServer(): Promise<void> {
       const query = req.query as Record<string, string>;
       const rfqId = query.rfqId ?? "";
       const supplier = query.supplier ?? "";
-      const item = query.item ?? "the requested items";
-      const quantity = parseInt(query.quantity ?? "0") || 0;
       const agentUrl = getAgentPublicUrl();
       const wsUrl = `wss://${agentUrl.replace(/^https?:\/\//, "")}/ws/agent?rfqId=${rfqId}&amp;supplier=${encodeURIComponent(supplier)}`;
-      const greeting = buildWelcomeGreeting(item, quantity);
 
       reply.type("text/xml").send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -176,8 +172,6 @@ export async function startAgentServer(): Promise<void> {
       ttsProvider="Google"
       transcriptionProvider="Deepgram"
       interruptible="none"
-      speechTimeout="1500"
-      welcomeGreeting="${greeting}"
     />
   </Connect>
 </Response>`);
@@ -262,7 +256,6 @@ export async function startAgentServer(): Promise<void> {
                   region: "US",
                 }),
               },
-              { role: "assistant", content: buildWelcomeGreeting(fallbackItem, fallbackQty) },
             ],
             transcript: [],
             rfqDetails: {

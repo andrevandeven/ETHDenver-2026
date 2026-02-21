@@ -7,6 +7,7 @@ import { config } from "./config.js";
 process.on("uncaughtException", (err: NodeJS.ErrnoException) => {
   if (err.code === "ERR_INVALID_STATE") return; // suppress ZgFile GC warnings
   console.error("[agent] Uncaught exception:", err);
+  process.exit(1); // don't leave zombie processes listening to events
 });
 
 console.log("===========================================");

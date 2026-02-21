@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
-import { parseEther, keccak256, toBytes } from "viem";
+import { parseEther, keccak256, toBytes, decodeEventLog } from "viem";
 import { ADDRESSES, NEGOTIATOR_INFT_ABI, USAGE_CREDITS_ABI } from "@/lib/contracts";
 import { zgGalileo } from "@/lib/wagmi";
 import { Header } from "@/components/Header";
@@ -28,17 +28,18 @@ export default function MintPage() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  // Extract tokenId from mint receipt logs
+  // Extract tokenId from the AgentMinted event in the mint receipt
   function getTokenIdFromReceipt(): bigint | null {
     if (!mintReceipt) return null;
-    // AgentMinted event topic
     for (const log of mintReceipt.logs) {
-      if (log.topics.length >= 2) {
-        // tokenId is the first indexed param
-        return BigInt(log.topics[1] as string);
-      }
+      try {
+        const decoded = decodeEventLog({ abi: NEGOTIATOR_INFT_ABI, data: log.data, topics: log.topics });
+        if (decoded.eventName === "AgentMinted") {
+          return (decoded.args as { tokenId: bigint }).tokenId;
+        }
+      } catch {}
     }
-    return BigInt(0);
+    return null;
   }
 
   async function handleMint(e: React.FormEvent) {

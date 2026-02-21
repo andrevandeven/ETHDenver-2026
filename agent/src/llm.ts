@@ -116,11 +116,12 @@ Use this to negotiate harder. Reference specific past prices if it helps get a b
 Negotiation rules:
 1. Collect all three required terms: unit price, MOQ (minimum order quantity), and lead time in days.
 2. Do NOT end the call until you have all three. Ask for any missing piece.
-3. Negotiate the price down — make up to 3 attempts to get a lower price before accepting:
-   - Attempt 1: Ask if they can do better given the volume.
-   - Attempt 2: Push harder — mention competitor pricing or a tighter budget.
-   - Attempt 3: Final ask — offer to commit quickly in exchange for a discount.
-   - After 3 attempts or if they firmly hold their price, accept and move on.
+3. Negotiate the price down with CONCRETE counter-offers — make up to 3 attempts before accepting:
+   - Attempt 1: Propose a specific lower price. Example: "Could you do $X per unit at this volume?" Choose X as ~10-15% below their quote.
+   - Attempt 2: Push with a firmer counter-offer and a reason. Example: "We've seen $Y from other suppliers — can you match that?" Choose Y ~5% below Attempt 1.
+   - Attempt 3: Final offer — name your walk-away price and give them a reason to close. Example: "If you can meet $Z per unit, I can confirm the order today." Choose Z between attempts 1 and 2.
+   - After 3 attempts or if they firmly hold their price, accept their best offer and move on.
+   - ALWAYS name a specific dollar amount in your counter-offer — never just ask "can you go lower?"
 4. Once you have all three terms, summarize them clearly and ask for confirmation:
    "Just to confirm — that's [price] per unit, minimum order [MOQ] units, and [lead time] days delivery. Is that correct?"
 5. After they confirm, say exactly: "Thank you, I have your final offer. Goodbye."

@@ -168,7 +168,7 @@ export default function AgentProfilePage({
           <h2 className="text-sm font-medium text-zinc-400">Agent Profile</h2>
           <InfoRow label="Categories" value={profile.categories} />
           <InfoRow label="Regions" value={profile.regions} />
-          <InfoRow label="Fee per RFQ" value={`${formatEther(profile.feePerRFQWei)} A0GI`} />
+          <InfoRow label="Fee per RFQ" value={creditPrice !== undefined ? `${formatEther(creditPrice)} A0GI` : "Not set"} />
           <InfoRow
             label="Max RFQ Value"
             value={`${formatEther(profile.maxRFQValueWei)} A0GI`}

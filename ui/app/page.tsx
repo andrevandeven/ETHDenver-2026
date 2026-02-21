@@ -19,21 +19,21 @@ function AgentList() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-zinc-100">
-          Active Negotiator Agents ({total})
+          Browse Agents ({total})
         </h2>
         <Link
           href="/mint"
           className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm font-medium text-white transition-colors"
         >
-          + Mint New Agent
+          + List Your Agent
         </Link>
       </div>
 
       {total === 0 ? (
         <div className="text-center py-16 border border-dashed border-zinc-800 rounded-xl">
-          <p className="text-zinc-500">No agents minted yet.</p>
+          <p className="text-zinc-500">No agents listed yet. Be the first.</p>
           <Link href="/mint" className="text-indigo-400 hover:text-indigo-300 text-sm mt-2 inline-block">
-            Mint the first one →
+            Mint an agent &rarr;
           </Link>
         </div>
       ) : (
@@ -71,7 +71,7 @@ function AgentEntry({ index }: { index: number }) {
     query: { enabled: tokenId !== undefined },
   });
 
-  if (!tokenId || !profile || !owner) {
+  if (tokenId === undefined || !profile || !owner) {
     return (
       <div className="h-32 rounded-xl border border-zinc-800 bg-zinc-900 animate-pulse" />
     );
@@ -83,7 +83,6 @@ function AgentEntry({ index }: { index: number }) {
       name={profile.name}
       categories={profile.categories}
       regions={profile.regions}
-      feePerRFQWei={profile.feePerRFQWei}
       owner={owner}
     />
   );
@@ -97,16 +96,50 @@ export default function Home() {
       <Header />
       <main className="max-w-6xl mx-auto px-4 py-10">
         {/* Hero */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl font-bold text-zinc-100 tracking-tight">
-            Procurement Negotiator iNFT
+        <div className="mb-16 text-center">
+          <h1 className="text-5xl font-bold text-zinc-100 tracking-tight">
+            DealForge
           </h1>
-          <p className="mt-3 text-lg text-zinc-400 max-w-2xl mx-auto">
-            AI-powered procurement agents on 0G Chain. Negotiate with suppliers via real voice calls,
-            powered by 0G Compute LLM inference. Quotes stored on 0G Storage.
+          <p className="mt-4 text-xl text-zinc-400 max-w-2xl mx-auto">
+            A marketplace for AI procurement agents that call suppliers and negotiate the best price &mdash; on a real phone call.
           </p>
+
+          {/* How it works */}
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto text-left">
+            <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/50">
+              <div className="text-2xl mb-2 font-bold text-indigo-400">1</div>
+              <h3 className="text-sm font-semibold text-zinc-200">Pick an agent</h3>
+              <p className="text-xs text-zinc-500 mt-1">
+                Each agent is an iNFT with proprietary supplier intelligence &mdash; pricing history, negotiation tactics, and relationship data built up over dozens of calls. You&apos;re paying for that edge.
+              </p>
+            </div>
+            <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/50">
+              <div className="text-2xl mb-2 font-bold text-indigo-400">2</div>
+              <h3 className="text-sm font-semibold text-zinc-200">Buy credits &amp; submit an RFQ</h3>
+              <p className="text-xs text-zinc-500 mt-1">
+                Pay the agent owner per-use via on-chain credits. Tell the agent what you need and which supplier to call. Payment goes directly to the owner.
+              </p>
+            </div>
+            <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/50">
+              <div className="text-2xl mb-2 font-bold text-indigo-400">3</div>
+              <h3 className="text-sm font-semibold text-zinc-200">Agent calls &amp; negotiates</h3>
+              <p className="text-xs text-zinc-500 mt-1">
+                The agent makes a real voice call to your supplier, leverages its accumulated intel to negotiate harder, and commits the quote on-chain with full transcript.
+              </p>
+            </div>
+          </div>
+
+          {/* Tech badges */}
+          <div className="mt-8 flex justify-center gap-3 flex-wrap">
+            <span className="px-3 py-1 rounded-full text-xs border border-zinc-700 text-zinc-400">0G Chain</span>
+            <span className="px-3 py-1 rounded-full text-xs border border-zinc-700 text-zinc-400">0G iNFT (ERC-7857)</span>
+            <span className="px-3 py-1 rounded-full text-xs border border-zinc-700 text-zinc-400">0G Compute LLM</span>
+            <span className="px-3 py-1 rounded-full text-xs border border-zinc-700 text-zinc-400">0G Storage</span>
+            <span className="px-3 py-1 rounded-full text-xs border border-zinc-700 text-zinc-400">Twilio Voice</span>
+          </div>
+
           {!isConnected && (
-            <p className="mt-4 text-sm text-indigo-400">
+            <p className="mt-6 text-sm text-indigo-400">
               Connect your wallet to get started
             </p>
           )}
@@ -124,6 +157,21 @@ export default function Home() {
             </p>
           </div>
         )}
+
+        {/* For agent owners */}
+        <div className="mt-16 text-center pb-10">
+          <h2 className="text-lg font-semibold text-zinc-300">Own an agent?</h2>
+          <p className="text-sm text-zinc-500 mt-1 max-w-lg mx-auto">
+            Mint a negotiation agent, build up proprietary supplier intelligence, and earn every time someone uses it.
+            Your agent&apos;s knowledge is stored as an iNFT on 0G &mdash; it&apos;s yours to own, trade, or rent out.
+          </p>
+          <Link
+            href="/mint"
+            className="inline-block mt-4 px-5 py-2.5 rounded-lg border border-zinc-700 hover:border-zinc-500 text-sm text-zinc-300 transition-colors"
+          >
+            Mint an Agent
+          </Link>
+        </div>
       </main>
     </div>
   );

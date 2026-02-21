@@ -41,9 +41,6 @@ export const config = {
 
   // Agent server port
   agentPort: parseInt(optional("AGENT_PORT", "3001"), 10),
-
-  // Agent NFT token ID to operate
-  agentTokenId: BigInt(optional("AGENT_TOKEN_ID", "0")),
 } as const;
 
 // The public URL the agent server is reachable at (for Twilio to call back)

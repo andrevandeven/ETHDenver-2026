@@ -12,7 +12,6 @@ process.on("uncaughtException", (err: NodeJS.ErrnoException) => {
 console.log("===========================================");
 console.log(" Procurement Negotiator iNFT — Agent");
 console.log("===========================================");
-console.log(`Agent token ID : ${config.agentTokenId}`);
 console.log(`RPC URL        : ${config.rpcUrl}`);
 console.log(`Agent port     : ${config.agentPort}`);
 console.log(`Public URL     : ${config.agentPublicUrl || config.ngrokUrl || "(not set)"}`);

@@ -7,8 +7,21 @@ import path from "path";
 const BRAIN_DIR = path.join(process.cwd(), ".brains");
 if (!fs.existsSync(BRAIN_DIR)) fs.mkdirSync(BRAIN_DIR, { recursive: true });
 
+// Load the deployed NFT contract address to namespace brain files per deployment.
+// This prevents stale brain files from a previous deploy polluting a fresh one.
+function getContractTag(): string {
+  try {
+    const addrPath = path.resolve(process.cwd(), "../shared/addresses.json");
+    const addrs = JSON.parse(fs.readFileSync(addrPath, "utf8"));
+    return (addrs.negotiatorINFT as string).slice(2, 10).toLowerCase(); // 4-byte prefix
+  } catch {
+    return "local";
+  }
+}
+const CONTRACT_TAG = getContractTag();
+
 function localPath(agentId: string) {
-  return path.join(BRAIN_DIR, `agent-${agentId}.json`);
+  return path.join(BRAIN_DIR, `agent-${CONTRACT_TAG}-${agentId}.json`);
 }
 
 function saveLocal(agentId: string, brain: BrainData) {

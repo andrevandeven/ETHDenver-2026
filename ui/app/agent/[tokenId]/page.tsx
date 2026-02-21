@@ -105,12 +105,14 @@ export default function AgentProfilePage({
   const [brainLoading, setBrainLoading] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     setBrainLoading(true);
-    fetch(`${AGENT_URL}/api/brain/${tokenId}`)
+    fetch(`${AGENT_URL}/api/brain/${tokenId}`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => setBrain(data))
-      .catch(() => setBrain(null))
+      .catch((err) => { if (err.name !== "AbortError") setBrain(null); })
       .finally(() => setBrainLoading(false));
+    return () => controller.abort();
   }, [tokenId]);
 
   if (!profile) {

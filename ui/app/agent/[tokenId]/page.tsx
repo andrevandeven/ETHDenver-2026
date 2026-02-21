@@ -185,9 +185,23 @@ export default function AgentProfilePage({
           {brainLoading && <p className="text-xs text-zinc-500">Loading...</p>}
 
           {!brainLoading && supplierList.length === 0 && (
-            <p className="text-xs text-zinc-500">
-              No supplier data yet. This agent gets smarter with every negotiation.
-            </p>
+            <div className="space-y-3">
+              {(profile.categories ? profile.categories.split(",").map((c: string) => c.trim()).filter(Boolean) : ["General"]).map((cat: string) => (
+                <div key={cat} className="p-4 rounded-lg bg-zinc-800/30 border border-zinc-700/50 border-dashed space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-zinc-500">{cat} Suppliers</h3>
+                    <span className="text-xs text-zinc-600">0 calls</span>
+                  </div>
+                  <p className="text-xs text-zinc-600">
+                    {profile.regions || "All regions"} · Intelligence builds after first negotiation
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-zinc-700" />
+                    <span className="text-xs text-zinc-600">Negotiability — pending</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
 
           {supplierList.map((supplier) => (
@@ -256,7 +270,12 @@ function SupplierCard({ supplier, isOwner }: { supplier: SupplierProfile; isOwne
         )}
       </div>
 
-      {/* Public info: categories */}
+      {/* Public info: categories + last contacted + negotiability dot */}
+      <p className="text-xs text-zinc-500">
+        {supplier.totalCalls} call{supplier.totalCalls !== 1 ? "s" : ""}
+        {supplier.lastContactedAt ? ` · Last contacted ${new Date(supplier.lastContactedAt).toLocaleDateString()}` : ""}
+      </p>
+
       {supplier.categories.length > 0 && (
         <div className="flex gap-1.5 flex-wrap">
           {supplier.categories.map((cat) => (
@@ -266,6 +285,17 @@ function SupplierCard({ supplier, isOwner }: { supplier: SupplierProfile; isOwne
           ))}
         </div>
       )}
+
+      {/* Negotiability dot — visible to all, label only to owner */}
+      <div className="flex items-center gap-1.5">
+        <span className={`w-2 h-2 rounded-full ${
+          { low: "bg-red-400", medium: "bg-yellow-400", high: "bg-green-400" }[supplier.willingnessToNegotiate]
+        }`} />
+        {isOwner
+          ? <span className="text-xs text-zinc-400 capitalize">{supplier.willingnessToNegotiate} negotiability</span>
+          : <span className="text-xs text-zinc-600">Negotiability (owner only)</span>
+        }
+      </div>
 
       {/* Owner-only: pricing and tactics */}
       {isOwner && (

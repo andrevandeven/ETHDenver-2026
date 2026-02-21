@@ -1,8 +1,9 @@
 import twilio from "twilio";
 import { config, getAgentPublicUrl } from "./config.js";
 import { streamCompletion, buildBuyerSystemPrompt, Message } from "./llm.js";
+import { loadBrain } from "./brain.js";
+
 import { TranscriptEntry } from "./types.js";
-import { getBrain } from "./brain.js";
 
 // Session store: callSid -> conversation history + transcript
 const sessions = new Map<string, {
@@ -193,12 +194,14 @@ export async function startAgentServer(): Promise<void> {
   // ── Brain data API (for frontend) ──────────────────────────────────────────
   _server.get("/api/brain/:agentId", async (req, reply) => {
     const { agentId } = req.params as { agentId: string };
-    const brain = getBrain(agentId);
     reply.header("Access-Control-Allow-Origin", "*");
-    if (!brain) {
-      return reply.status(404).send({ error: "Brain not loaded for this agent" });
+    try {
+      // loadBrain checks: memory → 0G Storage (on-chain URI) → local file → empty
+      const brain = await loadBrain(BigInt(agentId));
+      return brain;
+    } catch (err) {
+      return reply.status(500).send({ error: String(err) });
     }
-    return brain;
   });
 
   // CORS preflight for brain API

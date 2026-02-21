@@ -134,7 +134,7 @@ contract RFQMarket is ReentrancyGuard {
     // ─────────────────────────────────────────────────────────────────────────
 
     /// @notice Commit a supplier quote obtained through voice negotiation.
-    ///         Caller must be authorized by the agent NFT owner (or be the owner).
+    ///         Open to any operator — access is gated by credit purchase in createRFQ.
     function commitQuote(
         uint256 rfqId,
         bytes32 quoteDataHash,
@@ -150,10 +150,6 @@ contract RFQMarket is ReentrancyGuard {
         require(
             rfq.status == RFQStatus.Open || rfq.status == RFQStatus.QuotesReceived,
             "RFQ not open"
-        );
-        require(
-            nft.isAuthorized(rfq.agentId, msg.sender),
-            "Not authorized agent operator"
         );
 
         uint256 quoteId = nextQuoteId++;

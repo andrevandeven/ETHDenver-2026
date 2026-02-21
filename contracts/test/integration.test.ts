@@ -301,16 +301,17 @@ describe("Procurement Negotiator iNFT - Integration", () => {
       ).to.be.revertedWith("Insufficient credits");
     });
 
-    it("reverts commitQuote from unauthorized address", async () => {
+    it("allows commitQuote from any address (open operator model)", async () => {
       const hash = ethers.keccak256(ethers.toUtf8Bytes("rfq"));
       await market.connect(buyer).createRFQ(agentId, hash, "uri");
 
       const validUntil = Math.floor(Date.now() / 1000) + 86400;
+      // Anyone can commit a quote — access is gated by credit purchase in createRFQ
       await expect(
         market
           .connect(stranger)
           .commitQuote(0n, ZERO_HASH, "uri", "Stranger Inc", 100n, 10n, 7n, validUntil)
-      ).to.be.revertedWith("Not authorized agent operator");
+      ).to.not.be.reverted;
     });
 
     it("reverts acceptQuote with wrong fee", async () => {

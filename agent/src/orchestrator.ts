@@ -174,30 +174,13 @@ async function handleRFQ(
 }
 
 /**
- * Check if this operator wallet is authorized for the given agentId.
- */
-async function isAuthorizedForAgent(agentId: bigint): Promise<boolean> {
-  const { nft, signer } = getContracts();
-  try {
-    const owner: string = await nft.ownerOf(agentId);
-    if (owner.toLowerCase() === signer.address.toLowerCase()) return true;
-    return await nft.isAuthorized(agentId, signer.address);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Start the orchestrator — handles any RFQ where this wallet is authorized.
+ * Start the orchestrator — handles all RFQs.
+ * Access control is enforced at createRFQ (credit consumption).
+ * Anyone who pays credits can use any agent; brain intelligence is owner-only in the UI.
  */
 export function startOrchestrator(): void {
   listenForRFQCreated(async (rfqId, buyer, agentId, _rfqDataHash) => {
-    const authorized = await isAuthorizedForAgent(agentId);
-    if (!authorized) {
-      console.log(`[orchestrator] Not authorized for agentId=${agentId}, skipping RFQ ${rfqId}`);
-      return;
-    }
-    console.log(`[orchestrator] Authorized for agentId=${agentId}, processing RFQ ${rfqId}`);
+    console.log(`[orchestrator] Processing RFQ ${rfqId} for agentId=${agentId} buyer=${buyer}`);
     handleRFQ(rfqId, buyer, agentId).catch((err) => {
       console.error(`[orchestrator] Error handling RFQ ${rfqId}:`, err);
     });

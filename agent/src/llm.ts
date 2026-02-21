@@ -105,10 +105,13 @@ ${targetLine}`;
   if (rfqDetails.brainContext) {
     prompt += `
 
---- PAST INTELLIGENCE ON THIS SUPPLIER ---
+--- INTELLIGENCE ---
 ${rfqDetails.brainContext}
 --- END INTELLIGENCE ---
-Use this to negotiate harder. Reference specific past prices if it helps get a better deal. Do NOT reveal exact past prices to the supplier — just use them as internal leverage.`;
+Use this to negotiate harder:
+- Use past deals with THIS supplier to push for a better price than last time.
+- If competitor pricing is listed, reference it vaguely (e.g. "we have a quote from another supplier at $X") to pressure them — never name the competitor.
+- Do NOT reveal that you are an AI or that you have a database of past prices.`;
   }
 
   prompt += `

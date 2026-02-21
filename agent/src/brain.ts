@@ -260,28 +260,46 @@ async function persistBrain(agentId: bigint, brain: BrainData): Promise<void> {
 }
 
 /**
- * Build context string for the system prompt — only for the specific supplier being called.
+ * Build context string for the system prompt — includes intel on the current supplier
+ * plus competitive pricing from other suppliers the agent has called.
  */
 export function buildSupplierContext(brain: BrainData, supplierName: string): string {
-  const supplier = findSupplier(brain, supplierName);
-  if (!supplier) return "";
-
   const lines: string[] = [];
-  lines.push(`\nYou have called "${supplier.name}" ${supplier.totalCalls} time(s) before.`);
-  lines.push(`Best price you've gotten from them: $${supplier.bestPriceUsd.toFixed(2)}/unit`);
-  lines.push(`Their average price: $${supplier.avgPriceUsd.toFixed(2)}/unit`);
-  lines.push(`Willingness to negotiate: ${supplier.willingnessToNegotiate}`);
 
-  if (supplier.tacticsLog.length > 0) {
-    lines.push(`What's worked with this supplier before:`);
-    supplier.tacticsLog.slice(-3).forEach((t) => lines.push(`  - ${t}`));
+  // ── Current supplier intel ──────────────────────────────────────────────────
+  const supplier = findSupplier(brain, supplierName);
+  if (supplier) {
+    lines.push(`PAST INTEL ON THIS SUPPLIER (${supplier.name}):`);
+    lines.push(`  Called ${supplier.totalCalls} time(s). Best price: $${supplier.bestPriceUsd.toFixed(2)}/unit. Avg: $${supplier.avgPriceUsd.toFixed(2)}/unit.`);
+    lines.push(`  Willingness to negotiate: ${supplier.willingnessToNegotiate}.`);
+
+    if (supplier.tacticsLog.length > 0) {
+      lines.push(`  What's worked before:`);
+      supplier.tacticsLog.slice(-3).forEach((t) => lines.push(`    - ${t}`));
+    }
+
+    const lastNeg = supplier.negotiations[supplier.negotiations.length - 1];
+    if (lastNeg) {
+      lines.push(`  Last deal: $${lastNeg.unitPriceUsd.toFixed(2)}/unit for ${lastNeg.item} (${lastNeg.date}).`);
+    }
+
+    lines.push(`  Internal target: push to $${supplier.bestPriceUsd.toFixed(2)}/unit or better.`);
   }
 
-  const lastNeg = supplier.negotiations[supplier.negotiations.length - 1];
-  if (lastNeg) {
-    lines.push(`Last deal: $${lastNeg.unitPriceUsd.toFixed(2)}/unit for ${lastNeg.item} (${lastNeg.date})`);
-    lines.push(`Push for a price at or below $${supplier.bestPriceUsd.toFixed(2)}/unit.`);
+  // ── Competitor intel ────────────────────────────────────────────────────────
+  const competitors = Object.values(brain.suppliers).filter(
+    (s) => s.name.toLowerCase() !== supplierName.toLowerCase() && s.bestPriceUsd < Infinity
+  );
+
+  if (competitors.length > 0) {
+    // Sort by best price ascending so we lead with the most competitive
+    const sorted = [...competitors].sort((a, b) => a.bestPriceUsd - b.bestPriceUsd);
+    lines.push(`\nCOMPETITOR PRICING (use as leverage — do NOT name the competitor directly):`);
+    sorted.slice(0, 3).forEach((c) => {
+      lines.push(`  - Another supplier offered $${c.bestPriceUsd.toFixed(2)}/unit (avg $${c.avgPriceUsd.toFixed(2)}).`);
+    });
+    lines.push(`  You can reference "other suppliers" or "competitor quotes" to pressure this supplier.`);
   }
 
-  return lines.join("\n");
+  return lines.length > 0 ? lines.join("\n") : "";
 }

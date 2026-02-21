@@ -54,7 +54,7 @@ export function Header() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <nav className="flex items-center gap-6">
           <Link href="/" className="font-semibold text-zinc-100 hover:text-white">
-            Negotiator iNFT
+            DealForge
           </Link>
           <Link href="/rfq" className="text-sm text-zinc-400 hover:text-zinc-100">
             My RFQs

@@ -407,7 +407,7 @@
             "type": "bytes32"
           }
         ],
-        "internalType": "struct IERC7857Lite.IntelligentData",
+        "internalType": "struct IERC7857.IntelligentData",
         "name": "",
         "type": "tuple"
       }

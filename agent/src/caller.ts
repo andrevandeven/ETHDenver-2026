@@ -2,6 +2,7 @@ import twilio from "twilio";
 import { config, getAgentPublicUrl } from "./config.js";
 import { streamCompletion, buildBuyerSystemPrompt, Message } from "./llm.js";
 import { TranscriptEntry } from "./types.js";
+import { getBrain } from "./brain.js";
 
 // Session store: callSid -> conversation history + transcript
 const sessions = new Map<string, {
@@ -16,6 +17,7 @@ export type RFQDetails = {
   quantity: number;
   region: string;
   budget?: string;
+  brainContext?: string;
 };
 
 export type CallResult = {
@@ -72,7 +74,13 @@ export async function initiateCall(
   // so the LLM knows it already said the opening line and doesn't repeat it.
   sessions.set(call.sid, {
     history: [
-      { role: "system", content: buildBuyerSystemPrompt(rfqDetails) },
+      { role: "system", content: buildBuyerSystemPrompt({
+        item: rfqDetails.item,
+        quantity: rfqDetails.quantity,
+        region: rfqDetails.region,
+        budget: rfqDetails.budget,
+        brainContext: rfqDetails.brainContext,
+      }) },
       { role: "assistant", content: welcomeGreeting },
     ],
     transcript: [],
@@ -166,7 +174,8 @@ export async function startAgentServer(): Promise<void> {
       url="${wsUrl}"
       ttsProvider="Google"
       transcriptionProvider="Deepgram"
-      interruptible="any"
+      interruptible="none"
+      speechTimeout="1500"
       welcomeGreeting="${greeting}"
     />
   </Connect>
@@ -179,6 +188,26 @@ export async function startAgentServer(): Promise<void> {
     const body = req.body as Record<string, string>;
     console.log(`[agent-server] call-status callSid=${body.CallSid} status=${body.CallStatus}`);
     return { ok: true };
+  });
+
+  // ── Brain data API (for frontend) ──────────────────────────────────────────
+  _server.get("/api/brain/:agentId", async (req, reply) => {
+    const { agentId } = req.params as { agentId: string };
+    const brain = getBrain(agentId);
+    reply.header("Access-Control-Allow-Origin", "*");
+    if (!brain) {
+      return reply.status(404).send({ error: "Brain not loaded for this agent" });
+    }
+    return brain;
+  });
+
+  // CORS preflight for brain API
+  _server.options("/api/brain/:agentId", async (_req, reply) => {
+    reply
+      .header("Access-Control-Allow-Origin", "*")
+      .header("Access-Control-Allow-Methods", "GET")
+      .header("Access-Control-Allow-Headers", "Content-Type")
+      .send();
   });
 
   // Start Fastify first so _server.server (Node http.Server) is available

@@ -2,17 +2,25 @@
 
 import Link from "next/link";
 import { formatEther } from "viem";
+import { useReadContract } from "wagmi";
+import { ADDRESSES, USAGE_CREDITS_ABI } from "@/lib/contracts";
 
 interface AgentCardProps {
   tokenId: bigint;
   name: string;
   categories: string;
   regions: string;
-  feePerRFQWei: bigint;
   owner: string;
 }
 
-export function AgentCard({ tokenId, name, categories, regions, feePerRFQWei, owner }: AgentCardProps) {
+export function AgentCard({ tokenId, name, categories, regions, owner }: AgentCardProps) {
+  const { data: creditPrice } = useReadContract({
+    address: ADDRESSES.usageCredits,
+    abi: USAGE_CREDITS_ABI,
+    functionName: "pricePerCredit",
+    args: [tokenId],
+  });
+
   return (
     <Link
       href={`/agent/${tokenId}`}
@@ -25,7 +33,7 @@ export function AgentCard({ tokenId, name, categories, regions, feePerRFQWei, ow
         </div>
         <div className="text-right">
           <p className="text-sm font-medium text-indigo-400">
-            {formatEther(feePerRFQWei)} A0GI / RFQ
+            {creditPrice !== undefined ? `${formatEther(creditPrice)} A0GI` : "—"} / use
           </p>
         </div>
       </div>

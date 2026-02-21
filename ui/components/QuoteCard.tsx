@@ -1,6 +1,5 @@
 "use client";
 
-import { formatEther } from "viem";
 import { TranscriptViewer } from "./TranscriptViewer";
 
 type TranscriptEntry = {
@@ -17,9 +16,16 @@ interface QuoteCardProps {
   leadTimeDays: bigint;
   quoteDataURI: string;
   transcript?: TranscriptEntry[];
-  isAccepted?: boolean;
-  onAccept?: () => void;
-  isAccepting?: boolean;
+}
+
+/**
+ * Convert unitPriceWei back to USD.
+ * The agent stores prices as: ethers.parseUnits(usd.toFixed(6), 15)
+ * So 1 USD = 1e15 wei. To reverse: divide by 1e15.
+ */
+function weiToUsd(wei: bigint): string {
+  const usd = Number(wei) / 1e15;
+  return usd.toFixed(2);
 }
 
 export function QuoteCard({
@@ -30,33 +36,17 @@ export function QuoteCard({
   leadTimeDays,
   quoteDataURI,
   transcript = [],
-  isAccepted = false,
-  onAccept,
-  isAccepting = false,
 }: QuoteCardProps) {
   return (
-    <div
-      className={`p-5 rounded-xl border ${
-        isAccepted
-          ? "border-green-500/50 bg-green-500/5"
-          : "border-zinc-800 bg-zinc-900"
-      }`}
-    >
+    <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-zinc-100">{supplierLabel}</h4>
-            {isAccepted && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 border border-green-500/30">
-                Accepted
-              </span>
-            )}
-          </div>
+          <h4 className="font-semibold text-zinc-100">{supplierLabel}</h4>
           <p className="text-xs text-zinc-500 mt-0.5">Quote #{String(quoteId)}</p>
         </div>
         <div className="text-right">
           <p className="text-lg font-bold text-zinc-100">
-            {formatEther(unitPriceWei)} A0GI
+            ${weiToUsd(unitPriceWei)}
           </p>
           <p className="text-xs text-zinc-500">per unit</p>
         </div>
@@ -84,18 +74,11 @@ export function QuoteCard({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
-        <TranscriptViewer entries={transcript} supplierLabel={supplierLabel} />
-        {onAccept && !isAccepted && (
-          <button
-            onClick={onAccept}
-            disabled={isAccepting}
-            className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-sm font-medium text-white transition-colors"
-          >
-            {isAccepting ? "Accepting…" : "Accept Quote"}
-          </button>
-        )}
-      </div>
+      {transcript.length > 0 && (
+        <div className="mt-3">
+          <TranscriptViewer entries={transcript} supplierLabel={supplierLabel} />
+        </div>
+      )}
     </div>
   );
 }

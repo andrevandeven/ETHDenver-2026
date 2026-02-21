@@ -81,24 +81,37 @@ export async function chatCompletion(messages: Message[]): Promise<string> {
 
 /**
  * The agent's buyer persona system prompt — injected with RFQ details per-call.
+ * If brainContext is provided, the agent uses past intel on this specific supplier.
  */
 export function buildBuyerSystemPrompt(rfqDetails: {
   item: string;
   quantity: number;
   region: string;
   budget?: string;
+  brainContext?: string;
 }): string {
   const targetLine = rfqDetails.budget
     ? `- Target price: ${rfqDetails.budget} (push to reach this — do not reveal it upfront)`
     : `- Target price: negotiate as low as possible`;
 
-  return `You are an AI procurement agent representing a merchant buyer on a voice call with a supplier. Your job is to negotiate the best price and terms.
+  let prompt = `You are an AI procurement agent representing a merchant buyer on a voice call with a supplier. Your job is to negotiate the best price and terms.
 
 RFQ Details:
 - Item: ${rfqDetails.item}
 - Quantity needed: ${rfqDetails.quantity} units
 - Delivery region: ${rfqDetails.region}
-${targetLine}
+${targetLine}`;
+
+  if (rfqDetails.brainContext) {
+    prompt += `
+
+--- PAST INTELLIGENCE ON THIS SUPPLIER ---
+${rfqDetails.brainContext}
+--- END INTELLIGENCE ---
+Use this to negotiate harder. Reference specific past prices if it helps get a better deal. Do NOT reveal exact past prices to the supplier — just use them as internal leverage.`;
+  }
+
+  prompt += `
 
 Negotiation rules:
 1. Collect all three required terms: unit price, MOQ (minimum order quantity), and lead time in days.
@@ -116,4 +129,6 @@ Voice call instructions:
 - Keep each response to 1-2 short sentences. Do not use lists or bullet points.
 - Be professional, friendly, and firm.
 - Never reveal the target budget unless the supplier asks directly.`;
+
+  return prompt;
 }

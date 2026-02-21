@@ -4,13 +4,16 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./interfaces/IERC7857Lite.sol";
+import "./interfaces/IERC7857.sol";
 
 /// @title NegotiatorINFT
-/// @notice ERC-7857-inspired iNFT that represents an AI procurement negotiation agent.
-///         Merchants rent the agent per-run via UsageCredits. The agent's "brain bundle"
-///         (system prompt + config) is stored on 0G Storage with the hash committed here.
-contract NegotiatorINFT is ERC721Enumerable, Ownable, ReentrancyGuard, IERC7857Lite {
+/// @notice 0G iNFT (ERC-7857) representing an AI procurement negotiation agent.
+///         Each token is an intelligent NFT whose brain bundle (supplier intelligence,
+///         negotiation tactics, pricing history) is stored on 0G Storage with the
+///         Merkle root hash committed on-chain. Merchants rent the agent per-run via
+///         UsageCredits, paying the owner for access to the agent's proprietary knowledge.
+/// @dev Implements IERC7857 (0G iNFT standard) for authorized usage and intelligent metadata.
+contract NegotiatorINFT is ERC721Enumerable, Ownable, ReentrancyGuard, IERC7857 {
     struct AgentProfile {
         string name;
         string categories;   // comma-separated product categories
@@ -35,7 +38,7 @@ contract NegotiatorINFT is ERC721Enumerable, Ownable, ReentrancyGuard, IERC7857L
     event AgentMinted(uint256 indexed tokenId, address indexed owner, string name);
     event BrainBundleUpdated(uint256 indexed tokenId, bytes32 hash, string uri);
 
-    constructor() ERC721("NegotiatorINFT", "NEGOI") {}
+    constructor() ERC721("DealForge Agent", "DFORGE") {}
 
     // ─────────────────────────────────────────────────────────────────────────
     // Mint & update
@@ -62,9 +65,9 @@ contract NegotiatorINFT is ERC721Enumerable, Ownable, ReentrancyGuard, IERC7857L
         profiles[tokenId] = profile;
     }
 
-    /// @notice Update the brain bundle hash and URI (0G Storage root hash). Only token owner.
+    /// @notice Update the brain bundle hash and URI (0G Storage root hash). Owner or authorized operator.
     function setBrainBundle(uint256 tokenId, bytes32 hash, string calldata uri) external {
-        require(ownerOf(tokenId) == msg.sender, "Not token owner");
+        require(ownerOf(tokenId) == msg.sender || _authorizations[tokenId][msg.sender], "Not owner or operator");
         profiles[tokenId].brainBundleHash = hash;
         profiles[tokenId].brainBundleURI = uri;
         _metadataHashes[tokenId] = hash;
@@ -74,7 +77,7 @@ contract NegotiatorINFT is ERC721Enumerable, Ownable, ReentrancyGuard, IERC7857L
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // IERC7857Lite — authorization
+    // ERC-7857 (0G iNFT) — authorization
     // ─────────────────────────────────────────────────────────────────────────
 
     /// @notice Grant `user` permission to act as agent operator. Only token owner.
@@ -114,7 +117,7 @@ contract NegotiatorINFT is ERC721Enumerable, Ownable, ReentrancyGuard, IERC7857L
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // IERC7857Lite — intelligent data
+    // ERC-7857 (0G iNFT) — intelligent data
     // ─────────────────────────────────────────────────────────────────────────
 
     /// @notice Returns the brain bundle as ERC-7857 IntelligentData.

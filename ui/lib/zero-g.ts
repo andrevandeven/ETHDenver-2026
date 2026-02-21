@@ -31,9 +31,11 @@ export async function uploadRFQData(data: unknown): Promise<UploadResult> {
     // Fall through to local hash
   }
 
-  console.log("[zero-g] Using local hash fallback:", hash);
+  // Encode the full JSON in the URI so the agent can retrieve it without 0G Storage
+  const encoded = Buffer.from(json).toString("base64");
+  console.log("[zero-g] Using inline data URI fallback");
   return {
     rootHash: hash,
-    uri: `local://${hash}`,
+    uri: `json://${encoded}`,
   };
 }

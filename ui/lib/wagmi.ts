@@ -1,4 +1,5 @@
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { createConfig, http } from "wagmi";
+import { metaMask } from "wagmi/connectors";
 import { defineChain } from "viem";
 
 export const zgGalileo = defineChain({
@@ -17,9 +18,11 @@ export const zgGalileo = defineChain({
   testnet: true,
 });
 
-export const wagmiConfig = getDefaultConfig({
-  appName: "Procurement Negotiator iNFT",
-  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? "demo-project-id",
+export const wagmiConfig = createConfig({
   chains: [zgGalileo],
+  connectors: [metaMask()],
+  transports: {
+    [zgGalileo.id]: http("https://evmrpc-testnet.0g.ai"),
+  },
   ssr: true,
 });

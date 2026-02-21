@@ -45,11 +45,10 @@ export async function streamCompletion(
       const token = chunk.choices[0]?.delta?.content ?? "";
       if (token) {
         full += token;
-        const isLast = chunk.choices[0]?.finish_reason != null;
-        onToken(token, isLast);
+        onToken(token, false); // always false during streaming
       }
     }
-    onToken("", true);
+    onToken("", true); // single last:true signal at the very end
   } catch (err) {
     console.error("[agent/llm] streamCompletion error:", err);
     const msg = " [LLM unavailable] ";
@@ -89,23 +88,32 @@ export function buildBuyerSystemPrompt(rfqDetails: {
   region: string;
   budget?: string;
 }): string {
-  return `You are an AI procurement agent representing a merchant buyer. Your job is to negotiate with suppliers to get the best possible price and terms for your client.
+  const targetLine = rfqDetails.budget
+    ? `- Target price: ${rfqDetails.budget} (push to reach this — do not reveal it upfront)`
+    : `- Target price: negotiate as low as possible`;
+
+  return `You are an AI procurement agent representing a merchant buyer on a voice call with a supplier. Your job is to negotiate the best price and terms.
 
 RFQ Details:
 - Item: ${rfqDetails.item}
 - Quantity needed: ${rfqDetails.quantity} units
 - Delivery region: ${rfqDetails.region}
-- Budget: ${rfqDetails.budget ?? "flexible, prefer best value"}
+${targetLine}
 
-Your objectives:
-1. Get a clear unit price, minimum order quantity (MOQ), and lead time.
-2. Negotiate for better pricing if possible, but remain professional.
-3. Once you have a firm offer, confirm it clearly and wrap up the call.
-4. Say goodbye after getting the final offer.
+Negotiation rules:
+1. Collect all three required terms: unit price, MOQ (minimum order quantity), and lead time in days.
+2. Do NOT end the call until you have all three. Ask for any missing piece.
+3. Negotiate the price down — make up to 3 attempts to get a lower price before accepting:
+   - Attempt 1: Ask if they can do better given the volume.
+   - Attempt 2: Push harder — mention competitor pricing or a tighter budget.
+   - Attempt 3: Final ask — offer to commit quickly in exchange for a discount.
+   - After 3 attempts or if they firmly hold their price, accept and move on.
+4. Once you have all three terms, summarize them clearly and ask for confirmation:
+   "Just to confirm — that's [price] per unit, minimum order [MOQ] units, and [lead time] days delivery. Is that correct?"
+5. After they confirm, say exactly: "Thank you, I have your final offer. Goodbye."
 
-Instructions:
-- Keep each response under 3 sentences — this is a phone call.
-- Be professional, friendly but firm.
-- Don't reveal your budget unless necessary.
-- When you have the final terms, say: "Thank you, I have your final offer. Goodbye."`;
+Voice call instructions:
+- Keep each response to 1-2 short sentences. Do not use lists or bullet points.
+- Be professional, friendly, and firm.
+- Never reveal the target budget unless the supplier asks directly.`;
 }

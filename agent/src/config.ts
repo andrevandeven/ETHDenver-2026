@@ -28,11 +28,7 @@ export const config = {
   twilioAccountSid: optional("TWILIO_ACCOUNT_SID"),
   twilioAuthToken: optional("TWILIO_AUTH_TOKEN"),
   twilioAgentNumber: optional("TWILIO_AGENT_NUMBER"),
-  suppliers: {
-    valuesource: optional("TWILIO_SUPPLIER_A_NUMBER"),
-    quickship: optional("TWILIO_SUPPLIER_B_NUMBER"),
-    bulkdeal: optional("TWILIO_SUPPLIER_C_NUMBER"),
-  },
+  supplierNumber: optional("TWILIO_SUPPLIER_A_NUMBER", "+14802088823"),
 
   // Public URLs
   ngrokUrl: optional("NGROK_URL"),           // suppliers server base URL

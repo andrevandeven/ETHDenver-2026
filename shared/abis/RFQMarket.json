@@ -1,0 +1,546 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_nft",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_credits",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "agentOwner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "AgentPaid",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "quoteId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      }
+    ],
+    "name": "QuoteAccepted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "quoteId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "supplierLabel",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "unitPriceWei",
+        "type": "uint256"
+      }
+    ],
+    "name": "QuoteCommitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "agentId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "rfqDataHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RFQCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "quoteId",
+        "type": "uint256"
+      }
+    ],
+    "name": "acceptQuote",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "quoteDataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "quoteDataURI",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "supplierLabel",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "unitPriceWei",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "moq",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "leadTimeDays",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint48",
+        "name": "validUntil",
+        "type": "uint48"
+      }
+    ],
+    "name": "commitQuote",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "agentId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "rfqDataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "rfqDataURI",
+        "type": "string"
+      }
+    ],
+    "name": "createRFQ",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "creditsContract",
+    "outputs": [
+      {
+        "internalType": "contract IUsageCredits",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "quoteId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getQuote",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "rfqId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "quoteDataHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "quoteDataURI",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "supplierLabel",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "unitPriceWei",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "moq",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "leadTimeDays",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint48",
+            "name": "validUntil",
+            "type": "uint48"
+          }
+        ],
+        "internalType": "struct RFQMarket.Quote",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRFQ",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "buyer",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "agentId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "rfqDataHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "rfqDataURI",
+            "type": "string"
+          },
+          {
+            "internalType": "uint48",
+            "name": "createdAt",
+            "type": "uint48"
+          },
+          {
+            "internalType": "enum RFQMarket.RFQStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "acceptedQuoteId",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct RFQMarket.RFQ",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRFQQuoteIds",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nextQuoteId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nextRFQId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nft",
+    "outputs": [
+      {
+        "internalType": "contract INegotiatorINFT",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "quotes",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rfqId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "quoteDataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "quoteDataURI",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "supplierLabel",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "unitPriceWei",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "moq",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "leadTimeDays",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint48",
+        "name": "validUntil",
+        "type": "uint48"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "rfqQuoteIds",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "rfqs",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "agentId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "rfqDataHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "rfqDataURI",
+        "type": "string"
+      },
+      {
+        "internalType": "uint48",
+        "name": "createdAt",
+        "type": "uint48"
+      },
+      {
+        "internalType": "enum RFQMarket.RFQStatus",
+        "name": "status",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "acceptedQuoteId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

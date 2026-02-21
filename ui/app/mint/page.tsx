@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { parseEther, keccak256, toBytes } from "viem";
 import { ADDRESSES, NEGOTIATOR_INFT_ABI, USAGE_CREDITS_ABI } from "@/lib/contracts";
+import { zgGalileo } from "@/lib/wagmi";
 import { Header } from "@/components/Header";
 import { TxLink } from "@/components/TxLink";
 
@@ -48,6 +49,7 @@ export default function MintPage() {
           profileURI: form.profileURI,
         },
       ],
+      chainId: zgGalileo.id,
     });
   }
 

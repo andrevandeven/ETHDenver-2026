@@ -1,13 +1,14 @@
 import { type Address } from "viem";
+import deployedAddresses from "../../shared/addresses.json";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Contract addresses — set via NEXT_PUBLIC_ env vars after deploy
+// Contract addresses — read from shared/addresses.json (written by deploy script)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ADDRESSES = {
-  negotiatorINFT: (process.env.NEXT_PUBLIC_NEGOTIATOR_INFT_ADDRESS ?? "") as Address,
-  usageCredits: (process.env.NEXT_PUBLIC_USAGE_CREDITS_ADDRESS ?? "") as Address,
-  rfqMarket: (process.env.NEXT_PUBLIC_RFQ_MARKET_ADDRESS ?? "") as Address,
+  negotiatorINFT: (process.env.NEXT_PUBLIC_NEGOTIATOR_INFT_ADDRESS || deployedAddresses.negotiatorINFT) as Address,
+  usageCredits: (process.env.NEXT_PUBLIC_USAGE_CREDITS_ADDRESS || deployedAddresses.usageCredits) as Address,
+  rfqMarket: (process.env.NEXT_PUBLIC_RFQ_MARKET_ADDRESS || deployedAddresses.rfqMarket) as Address,
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────

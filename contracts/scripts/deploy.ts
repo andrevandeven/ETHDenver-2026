@@ -3,7 +3,11 @@ import * as fs from "fs";
 import * as path from "path";
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
+  const signers = await ethers.getSigners();
+  if (!signers.length) {
+    throw new Error("No signer found — set PRIVATE_KEY in your .env file");
+  }
+  const deployer = signers[0];
   console.log("Deploying contracts with:", deployer.address);
   console.log("Balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH\n");
 

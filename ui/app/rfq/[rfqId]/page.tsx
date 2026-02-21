@@ -4,6 +4,7 @@ import { use, useState, useEffect } from "react";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { formatEther } from "viem";
 import { ADDRESSES, NEGOTIATOR_INFT_ABI, RFQ_MARKET_ABI } from "@/lib/contracts";
+import { zgGalileo } from "@/lib/wagmi";
 import { Header } from "@/components/Header";
 import { StatusBadge } from "@/components/StatusBadge";
 import { QuoteCard } from "@/components/QuoteCard";
@@ -74,6 +75,7 @@ export default function RFQDetailPage({ params }: { params: Promise<{ rfqId: str
       functionName: "acceptQuote",
       args: [rfqIdBn, quoteId],
       value: agentFee ?? BigInt(0),
+      chainId: zgGalileo.id,
     });
   }
 

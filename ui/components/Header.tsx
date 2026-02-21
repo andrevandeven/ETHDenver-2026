@@ -1,7 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from "wagmi";
+import { wagmiConfig, zgGalileo } from "@/lib/wagmi";
+
+function ConnectButton() {
+  const { address, isConnected } = useAccount();
+  const { connect, error, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
+
+  if (isConnected && chainId !== zgGalileo.id) {
+    return (
+      <button
+        disabled={isSwitching}
+        onClick={() => switchChain({ chainId: zgGalileo.id })}
+        className="text-sm px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-white disabled:opacity-50"
+      >
+        {isSwitching ? "Switching…" : "Switch to 0G Galileo"}
+      </button>
+    );
+  }
+
+  if (isConnected) {
+    return (
+      <button
+        onClick={() => disconnect()}
+        className="text-sm px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500"
+      >
+        {address?.slice(0, 6)}…{address?.slice(-4)}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {error && <span className="text-xs text-red-400">{error.message}</span>}
+      <button
+        disabled={isPending}
+        onClick={() => connect({ connector: wagmiConfig.connectors[0] })}
+        className="text-sm px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50"
+      >
+        {isPending ? "Connecting…" : "Connect Wallet"}
+      </button>
+    </div>
+  );
+}
 
 export function Header() {
   return (

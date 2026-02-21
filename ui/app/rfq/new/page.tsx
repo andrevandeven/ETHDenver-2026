@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useWriteContract, useWaitForTransactionReceipt, useAccount, useReadContract } from "wagmi";
 import { ADDRESSES, NEGOTIATOR_INFT_ABI, RFQ_MARKET_ABI } from "@/lib/contracts";
+import { zgGalileo } from "@/lib/wagmi";
 import { uploadRFQData } from "@/lib/zero-g";
 import { Header } from "@/components/Header";
 import { TxLink } from "@/components/TxLink";
@@ -54,6 +55,7 @@ export default function NewRFQPage() {
         abi: RFQ_MARKET_ABI,
         functionName: "createRFQ",
         args: [BigInt(form.agentId), rootHash, uri],
+        chainId: zgGalileo.id,
       });
     } finally {
       setIsUploading(false);

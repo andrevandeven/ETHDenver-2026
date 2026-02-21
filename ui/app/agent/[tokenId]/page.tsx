@@ -13,6 +13,7 @@ import {
   NEGOTIATOR_INFT_ABI,
   USAGE_CREDITS_ABI,
 } from "@/lib/contracts";
+import { zgGalileo } from "@/lib/wagmi";
 import { Header } from "@/components/Header";
 import { TxLink } from "@/components/TxLink";
 
@@ -151,7 +152,7 @@ export default function AgentProfilePage({
           {isOwner && creditPrice !== undefined && (
             <SetPriceForm tokenId={tokenIdBn} currentPrice={creditPrice} />
           )}
-          {!isOwner && creditPrice && creditPrice > BigInt(0) && (
+          {creditPrice !== undefined && creditPrice > BigInt(0) && (
             <BuyCreditsForm tokenId={tokenIdBn} pricePerCredit={creditPrice} />
           )}
         </div>
@@ -200,6 +201,7 @@ function AuthorizeForm({ tokenId }: { tokenId: bigint }) {
             abi: NEGOTIATOR_INFT_ABI,
             functionName: "authorizeUsage",
             args: [tokenId, addr as Address],
+            chainId: zgGalileo.id,
           })
         }
         disabled={isPending || !addr.startsWith("0x")}
@@ -238,6 +240,7 @@ function SetPriceForm({
             abi: USAGE_CREDITS_ABI,
             functionName: "setPrice",
             args: [tokenId, parseEther(price)],
+            chainId: zgGalileo.id,
           })
         }
         disabled={isPending}
@@ -279,6 +282,7 @@ function BuyCreditsForm({
             functionName: "buyCredits",
             args: [tokenId, BigInt(parseInt(amount || "1"))],
             value: total,
+            chainId: zgGalileo.id,
           })
         }
         disabled={isPending}

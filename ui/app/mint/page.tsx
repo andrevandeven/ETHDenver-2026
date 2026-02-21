@@ -153,38 +153,85 @@ export default function MintPage() {
               <p className="text-red-400 text-sm">{mintError.message}</p>
             )}
 
+            {/* Progress steps — shown once the process has started */}
+            {(isMinting || mintHash) && (
+              <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700 space-y-3">
+                <StepRow
+                  state={mintConfirmed ? "done" : isMinting ? "waiting-wallet" : mintHash ? "confirming" : "pending"}
+                  label="Mint agent NFT"
+                  hash={mintHash}
+                />
+                <StepRow
+                  state={
+                    !mintConfirmed ? "pending"
+                    : priceConfirmed ? "done"
+                    : isSettingPrice ? "waiting-wallet"
+                    : priceHash ? "confirming"
+                    : "pending"
+                  }
+                  label={`Set credit price (${form.pricePerCredit} A0GI)`}
+                  hash={priceHash}
+                />
+              </div>
+            )}
+
             {/* Step 1: Mint */}
-            {step === "mint" && !mintConfirmed && (
+            {step === "mint" && !mintHash && (
               <button
                 type="submit"
                 disabled={isMinting || !form.name}
                 className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 font-semibold text-white transition-colors"
               >
-                {isMinting ? "Minting…" : "Mint Agent"}
+                {isMinting ? "Check your wallet…" : "Mint Agent"}
               </button>
             )}
 
-            {mintHash && !mintConfirmed && (
-              <p className="text-xs text-zinc-500">Confirming mint... <TxLink hash={mintHash} /></p>
-            )}
-
             {/* Step 2: Set credit price */}
-            {step === "price" && (
-              <div className="space-y-3">
-                <p className="text-sm text-green-400">Agent minted! Now set the credit price.</p>
-                <button
-                  type="button"
-                  onClick={handleSetPrice}
-                  disabled={isSettingPrice}
-                  className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 font-semibold text-white transition-colors"
-                >
-                  {isSettingPrice ? "Setting price…" : `Set Credit Price: ${form.pricePerCredit} A0GI`}
-                </button>
-              </div>
+            {step === "price" && !priceHash && (
+              <button
+                type="button"
+                onClick={handleSetPrice}
+                disabled={isSettingPrice}
+                className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 disabled:opacity-50 font-semibold text-white transition-colors"
+              >
+                {isSettingPrice ? "Check your wallet…" : `Set Credit Price: ${form.pricePerCredit} A0GI`}
+              </button>
             )}
           </form>
         )}
       </main>
+    </div>
+  );
+}
+
+type StepState = "pending" | "waiting-wallet" | "confirming" | "done";
+
+function StepRow({ state, label, hash }: { state: StepState; label: string; hash?: `0x${string}` }) {
+  return (
+    <div className="flex items-center gap-3">
+      {state === "done" ? (
+        <span className="w-4 h-4 flex items-center justify-center text-green-400 text-xs shrink-0">✓</span>
+      ) : state === "confirming" || state === "waiting-wallet" ? (
+        <span className="w-4 h-4 shrink-0">
+          <span className="block w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+        </span>
+      ) : (
+        <span className="w-4 h-4 rounded-full border border-zinc-600 shrink-0" />
+      )}
+      <div className="flex items-center gap-2 text-sm">
+        <span className={
+          state === "done" ? "text-zinc-400 line-through" :
+          state === "confirming" || state === "waiting-wallet" ? "text-zinc-100" :
+          "text-zinc-500"
+        }>
+          {state === "waiting-wallet" ? "Waiting for wallet…" :
+           state === "confirming" ? `Confirming — ${label}` :
+           label}
+        </span>
+        {hash && (state === "confirming" || state === "done") && (
+          <TxLink hash={hash} />
+        )}
+      </div>
     </div>
   );
 }

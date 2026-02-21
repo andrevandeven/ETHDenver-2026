@@ -79,9 +79,11 @@ export default function RFQDetailPage({ params }: { params: Promise<{ rfqId: str
               <span className="text-zinc-500">Data Hash</span>
               <span className="font-mono text-zinc-300 text-xs">{rfq.rfqDataHash}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">URI</span>
-              <span className="font-mono text-zinc-400 text-xs">{rfq.rfqDataURI}</span>
+            <div className="flex justify-between text-sm gap-4">
+              <span className="text-zinc-500 shrink-0">URI</span>
+              <span className="font-mono text-zinc-400 text-xs truncate" title={rfq.rfqDataURI}>
+                {rfq.rfqDataURI.length > 60 ? `${rfq.rfqDataURI.slice(0, 60)}…` : rfq.rfqDataURI}
+              </span>
             </div>
           </div>
         </div>
